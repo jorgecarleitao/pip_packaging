@@ -1,0 +1,2 @@
+include README.md
+include pip_packaging/data_file.txt
