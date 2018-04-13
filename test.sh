@@ -30,8 +30,8 @@ echo "dev tests done"
 deactivate
 rm -rf ~/.virtualenvs/pip_packaging
 rm -rf test_pip_packaging
-
 cd $dir
+
 echo "Running tests for source distribution..."
 
 # package it
@@ -47,11 +47,9 @@ source ~/.virtualenvs/pip_packaging/bin/activate
 
 # get the distributed source
 cp $dir/dist/pip_packaging-0.1.tar.gz .
-tar -xf pip_packaging-0.1.tar.gz
-cd pip_packaging-0.1
 
 # install
-python setup.py install
+pip install pip_packaging-0.1.tar.gz
 
 # import modules
 python -c "import pip_packaging; pip_packaging.f(); import pip_packaging.sub_package; pip_packaging.sub_package.sub_f()"
