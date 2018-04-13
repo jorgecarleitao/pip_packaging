@@ -1,9 +1,10 @@
 ## Python packaging
 
 This is a minimal Python package and a script to test its installation
-using distribution (`sdist`) and cloning (`git clone`).
+from cloning the project (`git clone`),
+a distributed source (`sdist`) or a distributed binary (`bdist`).
 
-Running `./test.sh` runs both tests:
+Running `./test.sh` runs a test using the three methods:
 
 Installation via cloning:
 
@@ -12,10 +13,18 @@ Installation via cloning:
 3. run installation tests
 4. delete virtualenv and directory
 
-Installation via distribution:
+Installation via distributed source:
 
 1. package the project using `sdist` (creates a `tar.gz`)
 2. copy the package to new directory
+3. create virtualenv and install the package
+4. run installation tests
+5. delete virtualenv and directory
+
+Installation via distributed binary:
+
+1. package the project using `bdist_wheel` (creates a `.whl`)
+2. copy the binaries to new directory
 3. create virtualenv and install the package
 4. run installation tests
 5. delete virtualenv and directory
