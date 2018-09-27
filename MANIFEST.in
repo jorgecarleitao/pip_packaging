@@ -1,2 +1,3 @@
+recursive-include pip_packaging *.py
 include README.md
 include pip_packaging/data_file.txt

@@ -1,109 +1,103 @@
 #!/usr/bin/env bash
-set -e
 
 dir=$(pwd)
+new_dir=${dir}/test
 
-echo "Running tests for dev installation..."
+function _prepare_venv {
+    mkdir -p ${new_dir}
+    cd ${new_dir}
 
-cd ~
+    echo "- creating virtualenv..."
+    virtualenv --quiet -p python3 ~/.virtualenvs/pip_packaging
+    source ~/.virtualenvs/pip_packaging/bin/activate
+    echo "- virtualenv created"
+}
 
-virtualenv -p python3 ~/.virtualenvs/pip_packaging
-source ~/.virtualenvs/pip_packaging/bin/activate
+function _test_packaging {
+    echo "- Running tests..."
+    # import and use package, sub-package and dependency
+    python -c "import pip_packaging; pip_packaging.f(); import pip_packaging.sub_package; pip_packaging.sub_package.sub_f(); import requests"
 
-# get the source code
-git clone $dir test_pip_packaging
-cd test_pip_packaging
+    # run the script
+    my_script
 
-# install
-pip install -r requirements.txt
+    # run the entry point
+    my_entry_point
 
-# test import modules
-python -c "import pip_packaging; pip_packaging.f(); import pip_packaging.sub_package; pip_packaging.sub_package.sub_f()"
+    echo "- Tests ran"
+}
 
-# test run the script
-my_script
+function _clean_up {
+    deactivate
+    cd ${dir}
+    rm -rf ${new_dir}
+    rm -rf ~/.virtualenvs/pip_packaging
+}
 
-# test run the entry point
-my_entry_point
+function test_git_installation {
+    echo "Running tests for git installation..."
 
-# cleanup
-echo "dev tests done"
-deactivate
-rm -rf ~/.virtualenvs/pip_packaging
-rm -rf test_pip_packaging
-cd $dir
+    _prepare_venv
 
-echo "Running tests for source distribution..."
+    echo "- installing package..."
+    git clone ${dir} test_pip_packaging --quiet
 
-# package it
-rm -rf dist
-python setup.py sdist
+    # install
+    cd test_pip_packaging && pip install --quiet -r requirements.txt && cd ..
+    echo "- package installed"
 
-cd ~
+    _test_packaging
 
-mkdir test_pip_packaging
-cd test_pip_packaging
-virtualenv -p python3 ~/.virtualenvs/pip_packaging
-source ~/.virtualenvs/pip_packaging/bin/activate
+    echo "Git installation works"
+    _clean_up
+}
 
-# get the distributed source
-cp $dir/dist/pip_packaging-0.1.tar.gz .
+function test_source_installation {
+    echo "Running tests for source installation..."
 
-# install
-pip install pip_packaging-0.1.tar.gz
+    # package it
+    python setup.py  --quiet sdist
 
-# import modules
-python -c "import pip_packaging; pip_packaging.f(); import pip_packaging.sub_package; pip_packaging.sub_package.sub_f()"
+    _prepare_venv
 
-# run the script
-my_script
+    echo "- installing package..."
+    cp ${dir}/dist/pip_packaging-0.1.tar.gz .
 
-# run the entry point
-my_entry_point
+    pip install  --quiet pip_packaging-0.1.tar.gz
+    echo "- package installed"
 
+    _test_packaging
 
-# cleanup virtualenv
-echo "distribution tests done"
-deactivate
-rm pip_packaging-0.1.tar.gz
-rm -rf pip_packaging-0.1
-rm -rf ~/.virtualenvs/pip_packaging
+    echo "Source installation works"
+    _clean_up
+    rm -rf dist
+    rm -rf pip_packaging.egg-info
+}
 
-cd $dir
+function test_wheel_installation {
+    echo "Running tests for wheel installation..."
 
-echo "Running tests for wheel installation..."
+    # package it
+    python setup.py --quiet bdist_wheel
 
-# package it
-rm -rf dist
-python setup.py bdist_wheel
+    _prepare_venv
 
-cd ~
+    echo "- installing package..."
+    # get the binaries
+    cp ${dir}/dist/pip_packaging-0.1-py3-none-any.whl .
 
-mkdir test_pip_packaging
-cd test_pip_packaging
-virtualenv -p python3 ~/.virtualenvs/pip_packaging
-source ~/.virtualenvs/pip_packaging/bin/activate
+    # install
+    pip install --quiet pip_packaging-0.1-py3-none-any.whl
+    echo "- package installed"
 
-# get the binaries
-cp $dir/dist/pip_packaging-0.1-py3-none-any.whl .
+    _test_packaging
 
-# install
-pip install pip_packaging-0.1-py3-none-any.whl
+    echo "Wheel installation works"
+    _clean_up
+    rm -rf build dist
+    rm -rf pip_packaging.egg-info
+}
 
-# import modules
-python -c "import pip_packaging; pip_packaging.f(); import pip_packaging.sub_package; pip_packaging.sub_package.sub_f()"
-
-# run the script
-my_script
-
-# run the entry point
-my_entry_point
-
-
-# cleanup virtualenv
-echo "distribution tests done"
-deactivate
-rm pip_packaging-0.1-py3-none-any.whl
-rm -rf ~/.virtualenvs/pip_packaging
-
-cd $dir
+test_git_installation
+test_source_installation
+test_wheel_installation
